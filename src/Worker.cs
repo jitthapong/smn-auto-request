@@ -84,6 +84,13 @@ namespace SMN_INV_AUTO_SYNC
                 OldGuids = true
             }.ConnectionString;
 
+            MySqlHelper.ExecuteNonQuery(_mySqlConnStr, @"CREATE TABLE IF NOT EXISTS log_email_auto_request  (
+  DocumentKey varchar(36) NULL,
+  EmailBody text NULL,
+  Status tinyint NULL,
+  StatusText text NULL
+);");
+
             _merchantKey = (string)MySqlHelper.ExecuteScalar(_mySqlConnStr, "select MerchantKey from merchant_data");
             _shopId = (int)MySqlHelper.ExecuteScalar(_mySqlConnStr, "select ShopID from shop_data");
 
@@ -146,7 +153,7 @@ namespace SMN_INV_AUTO_SYNC
                     conn.Open();
                     var respText = "";
                     var docKey = "";
-                    
+
                     if (_invModule.Document_Auto_Request(ref respText, ref docKey, _shopId, _saleDate, conn))
                     {
                         if (!string.IsNullOrEmpty(docKey))
@@ -154,8 +161,37 @@ namespace SMN_INV_AUTO_SYNC
                             var html = Document_Detail_Html(docKey, _langId, false, "", conn);
                             if (!string.IsNullOrEmpty(html))
                             {
-                                SendEmail(html);
+                                try
+                                {
+                                    MySqlHelper.ExecuteNonQuery(conn, "insert into log_email_auto_request values (@docKey, @body, @status, @statusText)",
+                                        new MySqlParameter[]
+                                        {
+                                            new MySqlParameter("@docKey", docKey),
+                                            new MySqlParameter("@body", html),
+                                            new MySqlParameter("@status", 0),
+                                            new MySqlParameter("@statusText", ""),
+                                        });
 
+                                    SendEmail(html);
+
+                                    MySqlHelper.ExecuteNonQuery(conn, "delete from log_email_auto_request where DocumentKey=@docKey",
+                                        new MySqlParameter[]
+                                        {
+                                            new MySqlParameter("@docKey", docKey)
+                                        });
+                                }
+                                catch (Exception ex)
+                                {
+                                    MySqlHelper.ExecuteNonQuery(conn, "update log_email_auto_request set Status=@status, StatusText=@statusText where DocumentKey=@docKey",
+                                        new MySqlParameter[]
+                                        {
+                                            new MySqlParameter("@docKey", docKey),
+                                            new MySqlParameter("@status", 99),
+                                            new MySqlParameter("@statusText", ex.Message),
+                                        });
+
+                                    _logger.Error(ex, "Error send email");
+                                }
                                 try
                                 {
                                     _exchangeDataService.SendInvenDataAsync(_shopId).ConfigureAwait(false);
@@ -163,6 +199,35 @@ namespace SMN_INV_AUTO_SYNC
                                 catch (Exception ex)
                                 {
                                     _logger.Error(ex, "Error about exchange inventory data");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var dt = new DataTable();
+
+                            using (var reader = MySqlHelper.ExecuteReader(conn, "select * from log_email_auto_request where Status=99"))
+                            {
+                                dt.Load(reader);
+                            }
+
+                            if (dt.Rows.Count > 0)
+                            {
+                                foreach (DataRow row in dt.Rows)
+                                {
+                                    var html = row["Body"].ToString();
+
+                                    try
+                                    {
+                                        SendEmail(html);
+
+                                        MySqlHelper.ExecuteNonQuery(conn, "delete from log_email_auto_request where DocumentKey=@docKey",
+                                            new MySqlParameter[]
+                                            {
+                                                new MySqlParameter("@docKey", row["DocumentKey"])
+                                            });
+                                    }
+                                    catch { }
                                 }
                             }
                         }
@@ -191,7 +256,7 @@ namespace SMN_INV_AUTO_SYNC
             using (var client = new SmtpClient())
             {
                 client.Connect(_smtpServer, _smtpPort, _smtpUseSsl);
-                
+
                 //client.Authenticate(_smtpUsername, _smtpPassword);
                 client.Authenticate("jitthapong@gmail.com", "nyxs ttwt ychi vvcj");
 
