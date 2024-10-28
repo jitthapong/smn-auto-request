@@ -85,9 +85,9 @@ namespace SMN_INV_AUTO_SYNC
             }.ConnectionString;
 
             MySqlHelper.ExecuteNonQuery(_mySqlConnStr, @"CREATE TABLE IF NOT EXISTS log_email_auto_request  (
-  DocumentKey varchar(36) NULL,
+  DocumentKey varchar(255) NULL,
   EmailBody text NULL,
-  Status tinyint NULL,
+  Status int(11) DEFAULT 0,
   StatusText text NULL
 );");
 
@@ -154,6 +154,14 @@ namespace SMN_INV_AUTO_SYNC
                     var respText = "";
                     var docKey = "";
 
+                    //try
+                    //{
+                    //    SendEmail("<h1>Hello</h1>");
+                    //}
+                    //catch(Exception ex)
+                    //{
+
+                    //}
                     if (_invModule.Document_Auto_Request(ref respText, ref docKey, _shopId, _saleDate, conn))
                     {
                         if (!string.IsNullOrEmpty(docKey))
@@ -163,12 +171,11 @@ namespace SMN_INV_AUTO_SYNC
                             {
                                 try
                                 {
-                                    MySqlHelper.ExecuteNonQuery(conn, "insert into log_email_auto_request values (@docKey, @body, @status, @statusText)",
+                                    MySqlHelper.ExecuteNonQuery(conn, "insert into log_email_auto_request values (@docKey, @body, 1, @statusText)",
                                         new MySqlParameter[]
                                         {
                                             new MySqlParameter("@docKey", docKey),
                                             new MySqlParameter("@body", html),
-                                            new MySqlParameter("@status", 0),
                                             new MySqlParameter("@statusText", ""),
                                         });
 
@@ -215,7 +222,7 @@ namespace SMN_INV_AUTO_SYNC
                             {
                                 foreach (DataRow row in dt.Rows)
                                 {
-                                    var html = row["Body"].ToString();
+                                    var html = row["EmailBody"].ToString();
 
                                     try
                                     {
@@ -257,8 +264,8 @@ namespace SMN_INV_AUTO_SYNC
             {
                 client.Connect(_smtpServer, _smtpPort, _smtpUseSsl);
 
-                //client.Authenticate(_smtpUsername, _smtpPassword);
-                client.Authenticate("jitthapong@gmail.com", "nyxs ttwt ychi vvcj");
+                client.Authenticate(_smtpUsername, _smtpPassword);
+                //client.Authenticate("jitthapong@gmail.com", "nyxs ttwt ychi vvcj");
 
                 client.Send(message);
                 client.Disconnect(true);
