@@ -50,6 +50,10 @@ namespace SMN_INV_AUTO_SYNC
         private string _smtpPassword;
         private bool _smtpUseSsl;
         private string _emailFrom;
+        private string _fromName;
+        private string _toEmail;
+        private string _toName;
+        private string _subject;
 
         private IRequestProvider _requestProvider;
         private IAuthService _authService;
@@ -101,8 +105,11 @@ namespace SMN_INV_AUTO_SYNC
                 .Where(x => x.Split('=')[0] == "ApiBaseServerUrl")
                 .Select(x => x.Split('=')[1]).FirstOrDefault();
 
-            var smtpProperty = dtProperty.AsEnumerable().Where(p => p["PropertyID"].ToString() == "3021" && p["PropertyValue"].ToString() == "1");
-            if (smtpProperty?.Any() == true)
+            var smtpProperty = dtProperty.AsEnumerable().Where(p => p["PropertyID"].ToString() == "3021" && p["PropertyValue"].ToString() == "1" && p["KEYID"].ToString() == _shopId.ToString());
+            if (smtpProperty.Any() == false)
+                smtpProperty = dtProperty.AsEnumerable().Where(p => p["PropertyID"].ToString() == "3021" && p["PropertyValue"].ToString() == "1");
+
+            if (smtpProperty.Any() == true)
             {
                 _smtpServer = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
                     .Where(x => x.Split('=')[0] == "MailServer")
@@ -119,6 +126,21 @@ namespace SMN_INV_AUTO_SYNC
                 _smtpUseSsl = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
                     .Where(x => x.Split('=')[0] == "EnableSSL")
                     .Select(x => bool.Parse(x.Split('=')[1])).FirstOrDefault();
+                _emailFrom = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
+                    .Where(x => x.Split('=')[0] == "FromEmail")
+                    .Select(x => x.Split('=')[1]).FirstOrDefault();
+                _fromName = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
+                    .Where(x => x.Split('=')[0] == "FromName")
+                    .Select(x => x.Split('=')[1]).FirstOrDefault();
+                _toEmail = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
+                    .Where(x => x.Split('=')[0] == "ToEmail")
+                    .Select(x => x.Split('=')[1]).FirstOrDefault();
+                _toName = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
+                    .Where(x => x.Split('=')[0] == "ToName")
+                    .Select(x => x.Split('=')[1]).FirstOrDefault();
+                _subject = smtpProperty.SelectMany(p => p["PropertyTextValue"].ToString().Split(';'))
+                    .Where(x => x.Split('=')[0] == "Subject")
+                    .Select(x => x.Split('=')[1]).FirstOrDefault();
             }
 
             _authService = new AuthService();
@@ -154,14 +176,6 @@ namespace SMN_INV_AUTO_SYNC
                     var respText = "";
                     var docKey = "";
 
-                    //try
-                    //{
-                    //    SendEmail("<h1>Hello</h1>");
-                    //}
-                    //catch(Exception ex)
-                    //{
-
-                    //}
                     if (_invModule.Document_Auto_Request(ref respText, ref docKey, _shopId, _saleDate, conn))
                     {
                         if (!string.IsNullOrEmpty(docKey))
@@ -246,13 +260,13 @@ namespace SMN_INV_AUTO_SYNC
                 }
             }
         }
-        //TODO: How to send to ?
+
         public void SendEmail(string html)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("jitthapong", "jitthapong@gmail.com"));
-            message.To.Add(new MailboxAddress("jitthapong vtec", "jitthapong@vtec-system.com"));
-            message.Subject = "Test";
+            message.From.Add(new MailboxAddress(_fromName, _emailFrom));
+            message.To.Add(new MailboxAddress(_toName, _toEmail));
+            message.Subject = _subject;
 
             var bodyBuilder = new BodyBuilder
             {
@@ -265,7 +279,6 @@ namespace SMN_INV_AUTO_SYNC
                 client.Connect(_smtpServer, _smtpPort, _smtpUseSsl);
 
                 client.Authenticate(_smtpUsername, _smtpPassword);
-                //client.Authenticate("jitthapong@gmail.com", "nyxs ttwt ychi vvcj");
 
                 client.Send(message);
                 client.Disconnect(true);
