@@ -186,6 +186,5 @@
   <ItemGroup>
     <Resource Include="appicon.ico" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

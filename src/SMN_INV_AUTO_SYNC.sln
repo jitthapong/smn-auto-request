@@ -5,6 +5,8 @@ VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SMN_INV_AUTO_SYNC", "SMN_INV_AUTO_SYNC.csproj", "{74608CC8-9C7A-4CA4-ABE6-15653BAA6CDB}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "vtecPOS", "..\..\vtecPOS-V4-Std\vtecPOS\vtecPOS.vbproj", "{0BB0425F-359D-498A-91E0-C8C01B1B6F10}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{74608CC8-9C7A-4CA4-ABE6-15653BAA6CDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{74608CC8-9C7A-4CA4-ABE6-15653BAA6CDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{74608CC8-9C7A-4CA4-ABE6-15653BAA6CDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BB0425F-359D-498A-91E0-C8C01B1B6F10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BB0425F-359D-498A-91E0-C8C01B1B6F10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BB0425F-359D-498A-91E0-C8C01B1B6F10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BB0425F-359D-498A-91E0-C8C01B1B6F10}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

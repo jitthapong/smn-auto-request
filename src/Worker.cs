@@ -161,7 +161,7 @@ namespace SMN_INV_AUTO_SYNC
             if (_timer != null)
                 _timer.Dispose();
 
-            _timer = new Timer(OnProcess, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+            _timer = new Timer(OnProcess, null, TimeSpan.Zero, TimeSpan.FromMinutes(10));
 
             _logger.Info("Start job create auto request document");
         }
